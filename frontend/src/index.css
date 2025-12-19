@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* HSL Colors */
+  --color-bg: 240 10% 4%;
+  --color-surface: 240 10% 8%;
+  --color-surface-glass: 240 10% 8% / 0.6;
+  --color-primary: 260 100% 65%;
+  --color-primary-glow: 260 100% 65% / 0.4;
+  --color-secondary: 190 100% 50%;
+  --color-text-main: 0 0% 100%;
+  --color-text-muted: 240 10% 60%;
+  --color-border: 240 10% 20%;
+
+  /* Gradients */
+  --gradient-main: linear-gradient(135deg, hsl(var(--color-primary)), hsl(var(--color-secondary)));
+  --gradient-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.0) 100%);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: hsl(var(--color-bg));
+  color: hsl(var(--color-text-main));
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+@layer components {
+  .glass-panel {
+    @apply backdrop-blur-xl border border-white/10 shadow-xl bg-black/40;
+  }
+
+  .btn-primary {
+    @apply bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all duration-200;
+  }
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Kanban specific */
+.kanban-column {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  padding: 1rem;
+  min-width: 300px;
+}
+
+.kanban-card {
+  background: hsl(var(--color-surface));
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.8rem;
+  cursor: grab;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Stronger glow effect */
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.3),
+    0 0 20px -5px rgb(var(--card-accent, 0 0 0) / 0.2);
+}
+
+.kanban-card:hover {
+  border-color: rgb(var(--card-accent) / 0.7);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow:
+    0 10px 20px -3px rgba(0, 0, 0, 0.4),
+    0 0 30px -5px rgb(var(--card-accent) / 0.5);
+}
+
+.kanban-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: rgb(var(--card-accent, var(--color-border)));
+  opacity: 0.8;
+}
+
+input,
+select,
+textarea {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-border);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: hsl(var(--color-primary));
+  box-shadow: 0 0 0 2px var(--color-primary-glow);
+}
