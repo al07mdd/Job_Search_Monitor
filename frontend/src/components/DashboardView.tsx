@@ -29,10 +29,10 @@ export const DashboardView: React.FC<Props> = ({ vacancies, onNavigate }) => {
         const active = filtered.filter(v => v.stage !== 'closed' && v.stage !== 'rejected').length;
 
         const counts = {
-            applied: filtered.filter(v => v.stage !== 'new').length,
-            response: filtered.filter(v => ['response', 'interview', 'offer', 'closed'].includes(v.stage)).length,
-            interview: filtered.filter(v => ['interview', 'offer', 'closed'].includes(v.stage)).length,
-            offer: filtered.filter(v => ['offer', 'closed'].includes(v.stage)).length
+            applied: filtered.filter(v => ['applied', 'response', 'interview', 'offer', 'rejected'].includes(v.stage)).length,
+            response: filtered.filter(v => ['response', 'interview', 'offer'].includes(v.stage)).length,
+            interview: filtered.filter(v => ['interview', 'offer'].includes(v.stage)).length,
+            offer: filtered.filter(v => ['offer'].includes(v.stage)).length
         };
 
         const responseRate = counts.applied ? Math.round((counts.response / counts.applied) * 100) : 0;
