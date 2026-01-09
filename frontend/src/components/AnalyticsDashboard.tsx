@@ -126,23 +126,25 @@ export const AnalyticsDashboard: React.FC = () => {
                             {report.recent_activity.length === 0 ? (
                                 <p className="text-gray-400">No recent activity recorded for this period.</p>
                             ) : (
-                                report.recent_activity.map((event) => (
-                                    <div key={event.id} className="flex items-center gap-4 text-sm border-b border-white/5 pb-3">
-                                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                                        <div className="text-gray-400 min-w-[150px]">
-                                            {new Date(event.timestamp).toLocaleString()}
+                                [...report.recent_activity]
+                                    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                                    .map((event) => (
+                                        <div key={event.id} className="flex items-center gap-4 text-sm border-b border-white/5 pb-3">
+                                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                            <div className="text-gray-400 min-w-[150px]">
+                                                {new Date(event.timestamp).toLocaleString()}
+                                            </div>
+                                            <div className="text-white flex-1">
+                                                <span className="font-medium text-blue-300">{event.type}</span>
+                                                {event.stage_from && event.stage_to && (
+                                                    <span className="text-gray-400 mx-2">
+                                                        {event.stage_from} → <span className="text-white">{event.stage_to}</span>
+                                                    </span>
+                                                )}
+                                                {event.comment && <span className="text-gray-500 ml-2">- {event.comment}</span>}
+                                            </div>
                                         </div>
-                                        <div className="text-white flex-1">
-                                            <span className="font-medium text-blue-300">{event.type}</span>
-                                            {event.stage_from && event.stage_to && (
-                                                <span className="text-gray-400 mx-2">
-                                                    {event.stage_from} → <span className="text-white">{event.stage_to}</span>
-                                                </span>
-                                            )}
-                                            {event.comment && <span className="text-gray-500 ml-2">- {event.comment}</span>}
-                                        </div>
-                                    </div>
-                                ))
+                                    ))
                             )}
                         </div>
                     </div>
