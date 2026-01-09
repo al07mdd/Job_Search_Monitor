@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import type { AnalyticsReport } from '../types';
 import { ReportPrintView } from './ReportPrintView';
-import { TrendingUp, Users, FileText, CheckCircle, XCircle, Slash, Printer } from 'lucide-react';
+import { TrendingUp, Users, FileText, CheckCircle, XCircle, Slash, Printer, Zap } from 'lucide-react';
 
 export const AnalyticsDashboard: React.FC = () => {
     const [report, setReport] = useState<AnalyticsReport | null>(null);
@@ -81,7 +81,7 @@ export const AnalyticsDashboard: React.FC = () => {
                 <div className="text-red-400 p-8">Failed to load report: {error}</div>
             ) : report ? (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
                         <StatCard
                             title="New Vacancies"
                             value={report.metrics.new_vacancies_count}
@@ -93,6 +93,12 @@ export const AnalyticsDashboard: React.FC = () => {
                             value={report.metrics.applications_sent}
                             icon={<TrendingUp className="text-orange-400" />}
                             gradient="from-orange-500/10 to-orange-500/5 hover:from-orange-500/20"
+                        />
+                        <StatCard
+                            title="Responses"
+                            value={(report.metrics as any).responses || 0}
+                            icon={<Zap className="text-cyan-400" />}
+                            gradient="from-cyan-500/10 to-cyan-500/5 hover:from-cyan-500/20"
                         />
                         <StatCard
                             title="Interviews"

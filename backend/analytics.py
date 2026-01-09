@@ -47,33 +47,44 @@ def generate_monthly_report(year: int, month: int) -> Dict:
         if not events_df.empty and 'timestamp' in events_df.columns:
             events_df['timestamp'] = pd.to_datetime(events_df['timestamp'], errors='coerce')
 
-        # 4. Define Period
-        try:
-            start_date = datetime(year, month, 1)
-            if month == 12:
-                end_date = datetime(year + 1, 1, 1)
-            else:
-                end_date = datetime(year, month + 1, 1)
-        except ValueError:
-            return empty_report
+        # 4. Define Period (skip if All Time flag)
+        is_all_time = (year == -1 or month == -1)
+        
+        if not is_all_time:
+            try:
+                start_date = datetime(year, month, 1)
+                if month == 12:
+                    end_date = datetime(year + 1, 1, 1)
+                else:
+                    end_date = datetime(year, month + 1, 1)
+            except ValueError:
+                return empty_report
+        else:
+            start_date = None
+            end_date = None
 
         # 5. Filter Data
         period_events = pd.DataFrame()
         if not events_df.empty and 'timestamp' in events_df.columns:
-            # Drop rows with invalid dates
             events_df = events_df.dropna(subset=['timestamp'])
-            period_events = events_df[
-                (events_df['timestamp'] >= start_date) & 
-                (events_df['timestamp'] < end_date)
-            ].copy()
+            if is_all_time:
+                period_events = events_df.copy()
+            else:
+                period_events = events_df[
+                    (events_df['timestamp'] >= start_date) & 
+                    (events_df['timestamp'] < end_date)
+                ].copy()
 
         new_vacancies = pd.DataFrame()
         if not vacancies_df.empty and 'created_at' in vacancies_df.columns:
             vacancies_df = vacancies_df.dropna(subset=['created_at'])
-            new_vacancies = vacancies_df[
-                (vacancies_df['created_at'] >= start_date) & 
-                (vacancies_df['created_at'] < end_date)
-            ]
+            if is_all_time:
+                new_vacancies = vacancies_df.copy()
+            else:
+                new_vacancies = vacancies_df[
+                    (vacancies_df['created_at'] >= start_date) & 
+                    (vacancies_df['created_at'] < end_date)
+                ]
 
         # 6. Calculate Metrics
         metrics = empty_report["metrics"].copy()
@@ -84,6 +95,7 @@ def generate_monthly_report(year: int, month: int) -> Dict:
         if not period_events.empty and 'stage_to' in period_events.columns:
             stage_to_safe = period_events['stage_to'].fillna('').astype(str)
             metrics["applications_sent"] = len(stage_to_safe[stage_to_safe == 'applied'])
+            metrics["responses"] = len(stage_to_safe[stage_to_safe == 'response'])
             metrics["interviews"] = len(stage_to_safe[stage_to_safe == 'interview'])
             metrics["offers"] = len(stage_to_safe[stage_to_safe == 'offer'])
             metrics["rejected"] = len(stage_to_safe[stage_to_safe == 'rejected'])

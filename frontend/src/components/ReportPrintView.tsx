@@ -36,6 +36,7 @@ const translations = {
         kpi: {
             new: "New Positions",
             app: "Applications",
+            res: "Responses",
             int: "Interviews",
             off: "Offers Received",
             rej: "Rejections"
@@ -61,6 +62,7 @@ const translations = {
         kpi: {
             new: "Neue Positionen",
             app: "Bewerbungen",
+            res: "Antworten",
             int: "Interviews",
             off: "Angebote",
             rej: "Absagen"
@@ -249,10 +251,11 @@ export const ReportPrintView: React.FC<Props> = ({ year, month, metrics, onClose
                                 </div>
 
                                 {/* KPI Summary */}
-                                <div className="grid grid-cols-5 gap-3 mb-8">
+                                <div className="grid grid-cols-6 gap-3 mb-8">
                                     {[
                                         { label: t.kpi.new, val: metrics.new_vacancies_count },
                                         { label: t.kpi.app, val: metrics.applications_sent },
+                                        { label: t.kpi.res, val: (metrics as any).responses || 0 },
                                         { label: t.kpi.int, val: metrics.interviews },
                                         { label: t.kpi.off, val: metrics.offers },
                                         { label: t.kpi.rej, val: metrics.rejected },

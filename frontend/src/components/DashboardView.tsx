@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import type { Vacancy } from '../types';
+import React, { useEffect, useMemo, useState } from 'react';
+import type { Vacancy, AnalyticsReport } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
-import { Users, Target, Zap, Clock, Calendar } from 'lucide-react';
+import { Users, Target, Zap, Clock, Calendar, Loader2 } from 'lucide-react';
+import { api } from '../services/api';
 
 interface Props {
     vacancies: Vacancy[];
@@ -16,31 +17,50 @@ export const DashboardView: React.FC<Props> = ({ vacancies, onNavigate }) => {
     const [selectedMonth, setSelectedMonth] = useState(-1);
     const [selectedYear, setSelectedYear] = useState(2025);
 
+    // Backend Report State
+    const [report, setReport] = useState<AnalyticsReport | null>(null);
+    const [loadingReport, setLoadingReport] = useState(false);
+
+    useEffect(() => {
+        loadBackendStats();
+    }, [selectedMonth, selectedYear, vacancies]); // Recalculate if date or data changes
+
+    const loadBackendStats = async () => {
+        setLoadingReport(true);
+        try {
+            // Convert monthly index (0-11) to (1-12) if not all time (-1)
+            const targetMonth = selectedMonth === -1 ? -1 : selectedMonth + 1;
+            const data = await api.getReport(selectedYear, targetMonth);
+            setReport(data);
+        } catch (e) {
+            console.error("Failed to load dashboard stats", e);
+        } finally {
+            setLoadingReport(false);
+        }
+    };
+
     // --- Calculation Logic ---
     const stats = useMemo(() => {
-        // Filter by created_at date IF specific month is selected
-        const filtered = vacancies.filter(v => {
-            if (selectedMonth === -1) return true; // All time
-            const date = new Date(v.created_at);
-            return date.getMonth() === selectedMonth && date.getFullYear() === selectedYear;
-        });
+        const metrics = report?.metrics;
 
-        const total = filtered.length;
-        const active = filtered.filter(v => v.stage !== 'closed' && v.stage !== 'rejected').length;
+        // KPI: Total and Active always from current prop state (live)
+        const total = vacancies.length;
+        const active = vacancies.filter(v => v.stage !== 'closed' && v.stage !== 'rejected' && v.stage !== 'new').length;
 
+        // Funnel counts from Backend (More accurate - based on events)
         const counts = {
-            applied: filtered.filter(v => ['applied', 'response', 'interview', 'offer', 'rejected'].includes(v.stage)).length,
-            response: filtered.filter(v => ['response', 'interview', 'offer'].includes(v.stage)).length,
-            interview: filtered.filter(v => ['interview', 'offer'].includes(v.stage)).length,
-            offer: filtered.filter(v => ['offer'].includes(v.stage)).length
+            applied: metrics?.applications_sent || 0,
+            response: (metrics as any)?.responses || 0,
+            interview: metrics?.interviews || 0,
+            offer: metrics?.offers || 0
         };
 
+        // Calculate rates based on Backend metrics
         const responseRate = counts.applied ? Math.round((counts.response / counts.applied) * 100) : 0;
         const interviewRate = counts.applied ? Math.round((counts.interview / counts.applied) * 100) : 0;
 
-        // Find stale vacancies (in 'applied' or 'response' > 7 days without update)
+        // Find stale vacancies (still live logic)
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
         const staleItems = vacancies.filter(v => {
             if (v.stage === 'closed' || v.stage === 'rejected' || v.stage === 'new') return false;
             if (!['applied', 'response'].includes(v.stage)) return false;
@@ -50,7 +70,7 @@ export const DashboardView: React.FC<Props> = ({ vacancies, onNavigate }) => {
         });
 
         return { total, active, counts, responseRate, interviewRate, staleItems, maxVal: Math.max(counts.applied, 1) };
-    }, [vacancies, selectedMonth, selectedYear]);
+    }, [vacancies, report]);
 
     return (
         <div className="h-full flex flex-col gap-4 p-2 overflow-hidden">
@@ -59,32 +79,35 @@ export const DashboardView: React.FC<Props> = ({ vacancies, onNavigate }) => {
             <div className="flex justify-between items-center shrink-0">
                 <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Overview</h2>
 
-                <div className={`flex items-center px-3 py-1.5 rounded-lg border ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200 shadow-sm'}`}>
-                    <Calendar size={14} className={`mr-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-                    <select
-                        value={selectedMonth}
-                        onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                        className={`bg-transparent border-none text-sm focus:ring-0 cursor-pointer focus:outline-none font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}
-                    >
-                        <option value={-1} className={isDark ? 'bg-gray-800' : 'bg-white'}>All Time</option>
-                        {Array.from({ length: 12 }, (_, i) => (
-                            <option key={i} value={i} className={isDark ? 'bg-gray-800' : 'bg-white'}>
-                                {new Date(0, i).toLocaleString('en-US', { month: 'long' })}
-                            </option>
-                        ))}
-                    </select>
-
-                    {selectedMonth !== -1 && (
+                <div className="flex items-center gap-3">
+                    {loadingReport && <Loader2 size={16} className="animate-spin text-blue-400" />}
+                    <div className={`flex items-center px-3 py-1.5 rounded-lg border ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200 shadow-sm'}`}>
+                        <Calendar size={14} className={`mr-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
                         <select
-                            value={selectedYear}
-                            onChange={(e) => setSelectedYear(Number(e.target.value))}
-                            className={`bg-transparent border-none text-sm focus:ring-0 ml-2 cursor-pointer focus:outline-none font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                            className={`bg-transparent border-none text-sm focus:ring-0 cursor-pointer focus:outline-none font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}
                         >
-                            <option value={2025} className={isDark ? 'bg-gray-800' : 'bg-white'}>2025</option>
-                            <option value={2026} className={isDark ? 'bg-gray-800' : 'bg-white'}>2026</option>
-                            <option value={2027} className={isDark ? 'bg-gray-800' : 'bg-white'}>2027</option>
+                            <option value={-1} className={isDark ? 'bg-gray-800' : 'bg-white'}>All Time</option>
+                            {Array.from({ length: 12 }, (_, i) => (
+                                <option key={i} value={i} className={isDark ? 'bg-gray-800' : 'bg-white'}>
+                                    {new Date(0, i).toLocaleString('en-US', { month: 'long' })}
+                                </option>
+                            ))}
                         </select>
-                    )}
+
+                        {selectedMonth !== -1 && (
+                            <select
+                                value={selectedYear}
+                                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                                className={`bg-transparent border-none text-sm focus:ring-0 ml-2 cursor-pointer focus:outline-none font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}
+                            >
+                                <option value={2025} className={isDark ? 'bg-gray-800' : 'bg-white'}>2025</option>
+                                <option value={2026} className={isDark ? 'bg-gray-800' : 'bg-white'}>2026</option>
+                                <option value={2027} className={isDark ? 'bg-gray-800' : 'bg-white'}>2027</option>
+                            </select>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -99,14 +122,14 @@ export const DashboardView: React.FC<Props> = ({ vacancies, onNavigate }) => {
                 />
                 <KpiCard
                     title="Response Rate"
-                    value={`${stats.responseRate}%`}
+                    value={`${stats.counts.response} (${stats.responseRate}%)`}
                     icon={<Zap className="text-yellow-500" />}
                     sub="from applications"
                     isDark={isDark}
                 />
                 <KpiCard
                     title="Interview Rate"
-                    value={`${stats.interviewRate}%`}
+                    value={`${stats.counts.interview} (${stats.interviewRate}%)`}
                     icon={<Users className="text-purple-500" />}
                     sub="conversion success"
                     isDark={isDark}
@@ -133,8 +156,6 @@ export const DashboardView: React.FC<Props> = ({ vacancies, onNavigate }) => {
                         <FunnelBar label="Interviews" count={stats.counts.interview} max={stats.maxVal} color="bg-purple-500" isDark={isDark} />
                         <FunnelBar label="Offers" count={stats.counts.offer} max={stats.maxVal} color="bg-green-500" isDark={isDark} />
                     </div>
-
-
                 </div>
 
                 {/* Stale Jobs List */}
@@ -185,7 +206,7 @@ export const DashboardView: React.FC<Props> = ({ vacancies, onNavigate }) => {
             </div>
 
             <div className={`mt-auto text-center text-xs py-0 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
-                Showing data for {selectedMonth === -1 ? 'all time' : new Date(selectedYear, selectedMonth).toLocaleString('en-US', { month: 'long', year: 'numeric' })} • {stats.total} total vacancies
+                Showing trends based on {selectedMonth === -1 ? 'all time' : new Date(selectedYear, selectedMonth).toLocaleString('en-US', { month: 'long', year: 'numeric' })} activity • {stats.total} total vacancies
             </div>
 
         </div>
