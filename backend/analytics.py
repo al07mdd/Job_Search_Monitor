@@ -93,13 +93,19 @@ def generate_monthly_report(year: int, month: int) -> Dict:
         metrics["activities_count"] = len(period_events)
         
         if not period_events.empty and 'stage_to' in period_events.columns:
-            stage_to_safe = period_events['stage_to'].fillna('').astype(str)
-            metrics["applications_sent"] = len(stage_to_safe[stage_to_safe == 'applied'])
-            metrics["responses"] = len(stage_to_safe[stage_to_safe == 'response'])
-            metrics["interviews"] = len(stage_to_safe[stage_to_safe == 'interview'])
-            metrics["offers"] = len(stage_to_safe[stage_to_safe == 'offer'])
-            metrics["rejected"] = len(stage_to_safe[stage_to_safe == 'rejected'])
-            metrics["closed"] = len(stage_to_safe[stage_to_safe == 'closed'])
+            # Drop entries where stage_to is NaN
+            stage_events = period_events.dropna(subset=['stage_to'])
+            
+            # Helper to count unique vacancies per stage
+            def count_unique(stage_name):
+                return stage_events[stage_events['stage_to'] == stage_name]['vacancy_id'].nunique()
+
+            metrics["applications_sent"] = count_unique('applied')
+            metrics["responses"] = count_unique('response')
+            metrics["interviews"] = count_unique('interview')
+            metrics["offers"] = count_unique('offer')
+            metrics["rejected"] = count_unique('rejected')
+            metrics["closed"] = count_unique('closed')
 
         # 7. Recent Activity (Safe JSON conversion)
         recent_activity = []

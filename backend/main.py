@@ -53,6 +53,11 @@ def update_stage(vacancy_id: str, stage: VacancyStage, comment: Optional[str] = 
         raise HTTPException(status_code=404, detail="Vacancy not found")
     
     old_stage_str = current['stage']
+    
+    # Check if the stage is actually changing
+    if old_stage_str == stage.value:
+        return current # No changes needed, return existing data
+
     try:
         old_stage = VacancyStage(old_stage_str)
     except:
