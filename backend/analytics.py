@@ -89,23 +89,27 @@ def generate_monthly_report(year: int, month: int) -> Dict:
         # 6. Calculate Metrics
         metrics = empty_report["metrics"].copy()
         
-        metrics["new_vacancies_count"] = len(new_vacancies)
-        metrics["activities_count"] = len(period_events)
-        
         if not period_events.empty and 'stage_to' in period_events.columns:
             # Drop entries where stage_to is NaN
             stage_events = period_events.dropna(subset=['stage_to'])
             
-            # Helper to count unique vacancies per stage
-            def count_unique(stage_name):
-                return stage_events[stage_events['stage_to'] == stage_name]['vacancy_id'].nunique()
+            # Helper to get unique vacancy data for each stage
+            def get_stage_data(stage_name):
+                ids = stage_events[stage_events['stage_to'] == stage_name]['vacancy_id'].unique().tolist()
+                return {"count": len(ids), "ids": ids}
 
-            metrics["applications_sent"] = count_unique('applied')
-            metrics["responses"] = count_unique('response')
-            metrics["interviews"] = count_unique('interview')
-            metrics["offers"] = count_unique('offer')
-            metrics["rejected"] = count_unique('rejected')
-            metrics["closed"] = count_unique('closed')
+            metrics["applications_sent"] = get_stage_data('applied')
+            metrics["responses"] = get_stage_data('response')
+            metrics["interviews"] = get_stage_data('interview')
+            metrics["offers"] = get_stage_data('offer')
+            metrics["rejected"] = get_stage_data('rejected')
+            metrics["closed"] = get_stage_data('closed')
+            
+        # Add new vacancies metric with IDs as well
+        metrics["new_vacancies_count"] = {
+            "count": len(new_vacancies),
+            "ids": new_vacancies['id'].unique().tolist() if not new_vacancies.empty else []
+        }
 
         # 7. Recent Activity (Safe JSON conversion)
         recent_activity = []

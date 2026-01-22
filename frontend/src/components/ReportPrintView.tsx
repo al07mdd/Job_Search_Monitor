@@ -268,12 +268,12 @@ export const ReportPrintView: React.FC<Props> = ({ year, month, metrics, onClose
                                 {/* KPI Summary */}
                                 <div className="grid grid-cols-6 gap-3 mb-8">
                                     {[
-                                        { label: t.kpi.new, val: metrics.new_vacancies_count },
-                                        { label: t.kpi.app, val: metrics.applications_sent },
-                                        { label: t.kpi.res, val: (metrics as any).responses || 0 },
-                                        { label: t.kpi.int, val: metrics.interviews },
-                                        { label: t.kpi.off, val: metrics.offers },
-                                        { label: t.kpi.rej, val: metrics.rejected },
+                                        { label: t.kpi.new, val: metrics.new_vacancies_count.count },
+                                        { label: t.kpi.app, val: metrics.applications_sent.count },
+                                        { label: t.kpi.res, val: metrics.responses.count },
+                                        { label: t.kpi.int, val: metrics.interviews.count },
+                                        { label: t.kpi.off, val: metrics.offers.count },
+                                        { label: t.kpi.rej, val: metrics.rejected.count },
                                     ].map((kpi, i) => (
                                         <div key={i} className="p-3 border rounded text-center" style={{ ...styles.grayBg, ...styles.lightGrayBorder }}>
                                             <div className="text-xl font-bold">{kpi.val}</div>

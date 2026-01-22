@@ -159,6 +159,17 @@ def get_events_for_vacancy(vacancy_id: str) -> List[dict]:
     except Exception:
         return []
 
+def has_event_for_stage(vacancy_id: str, stage: VacancyStage) -> bool:
+    """Checks if there is already a status_change event to this stage for this vacancy."""
+    ensure_data_files()
+    try:
+        df = pd.read_csv(EVENTS_FILE)
+        # Check if any row has matching vacancy_id AND stage_to == stage.value
+        exists = not df[(df['vacancy_id'] == vacancy_id) & (df['stage_to'] == stage.value)].empty
+        return exists
+    except Exception:
+        return False
+
 def delete_vacancy(vacancy_id: str) -> bool:
     """
     Deletes a vacancy and its associated events.

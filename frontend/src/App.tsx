@@ -122,8 +122,8 @@ function App() {
             onClick={() => setView('dashboard')}
             title="Dashboard"
             className={`w-full flex items-center p-3 rounded-lg transition-colors ${view === 'dashboard'
-                ? (isDark ? 'bg-white/10 text-white' : 'bg-blue-50 text-blue-600')
-                : (isDark ? 'text-gray-400 hover:text-white hover:bg-white/5' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100')
+              ? (isDark ? 'bg-white/10 text-white' : 'bg-blue-50 text-blue-600')
+              : (isDark ? 'text-gray-400 hover:text-white hover:bg-white/5' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100')
               } ${!isSidebarOpen && 'justify-center'}`}
           >
             <PieChart size={20} className={isSidebarOpen ? "mr-3" : ""} />
@@ -134,8 +134,8 @@ function App() {
             onClick={() => setView('board')}
             title="Board"
             className={`w-full flex items-center p-3 rounded-lg transition-colors ${view === 'board'
-                ? (isDark ? 'bg-white/10 text-white' : 'bg-blue-50 text-blue-600')
-                : (isDark ? 'text-gray-400 hover:text-white hover:bg-white/5' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100')
+              ? (isDark ? 'bg-white/10 text-white' : 'bg-blue-50 text-blue-600')
+              : (isDark ? 'text-gray-400 hover:text-white hover:bg-white/5' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100')
               } ${!isSidebarOpen && 'justify-center'}`}
           >
             <LayoutDashboard size={20} className={isSidebarOpen ? "mr-3" : ""} />
@@ -146,8 +146,8 @@ function App() {
             onClick={() => setView('analytics')}
             title="Analytics"
             className={`w-full flex items-center p-3 rounded-lg transition-colors ${view === 'analytics'
-                ? (isDark ? 'bg-white/10 text-white' : 'bg-blue-50 text-blue-600')
-                : (isDark ? 'text-gray-400 hover:text-white hover:bg-white/5' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100')
+              ? (isDark ? 'bg-white/10 text-white' : 'bg-blue-50 text-blue-600')
+              : (isDark ? 'text-gray-400 hover:text-white hover:bg-white/5' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100')
               } ${!isSidebarOpen && 'justify-center'}`}
           >
             <BarChart3 size={20} className={isSidebarOpen ? "mr-3" : ""} />
@@ -160,8 +160,8 @@ function App() {
             onClick={() => setView('settings')}
             title="Settings"
             className={`flex items-center w-full p-2 rounded-lg transition-colors ${view === 'settings'
-                ? (isDark ? 'text-white bg-white/10' : 'text-blue-600 bg-blue-50')
-                : (isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900')
+              ? (isDark ? 'text-white bg-white/10' : 'text-blue-600 bg-blue-50')
+              : (isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900')
               } ${!isSidebarOpen && 'justify-center'}`}
           >
             <Settings size={20} className={isSidebarOpen ? "mr-2" : ""} />
@@ -193,8 +193,8 @@ function App() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className={`w-full pl-3 pr-8 py-1.5 text-sm rounded-lg border focus:outline-none focus:ring-1 ${isDark
-                      ? 'bg-white/10 border-white/20 text-white focus:ring-blue-500 placeholder-gray-400'
-                      : 'bg-gray-100 border-gray-300 text-gray-900 focus:ring-blue-500 placeholder-gray-500'
+                    ? 'bg-white/10 border-white/20 text-white focus:ring-blue-500 placeholder-gray-400'
+                    : 'bg-gray-100 border-gray-300 text-gray-900 focus:ring-blue-500 placeholder-gray-500'
                     }`}
                   autoFocus={isSearchOpen}
                 />
@@ -250,7 +250,10 @@ function App() {
           )}
           {view === 'analytics' && (
             <div className="h-full overflow-y-auto custom-scrollbar">
-              <AnalyticsDashboard />
+              <AnalyticsDashboard
+                vacancies={vacancies}
+                onVacancyClick={(v) => setSelectedVacancy(v)}
+              />
             </div>
           )}
           {view === 'settings' && (

@@ -49,10 +49,10 @@ export const DashboardView: React.FC<Props> = ({ vacancies, onNavigate }) => {
 
         // Funnel counts from Backend (More accurate - based on events)
         const counts = {
-            applied: metrics?.applications_sent || 0,
-            response: (metrics as any)?.responses || 0,
-            interview: metrics?.interviews || 0,
-            offer: metrics?.offers || 0
+            applied: metrics?.applications_sent?.count || 0,
+            response: metrics?.responses?.count || 0,
+            interview: metrics?.interviews?.count || 0,
+            offer: metrics?.offers?.count || 0
         };
 
         // Calculate rates based on Backend metrics

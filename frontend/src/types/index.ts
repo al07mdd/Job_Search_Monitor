@@ -47,13 +47,14 @@ export interface Event {
 export interface AnalyticsReport {
     period: string;
     metrics: {
-        new_vacancies_count: number;
+        new_vacancies_count: { count: number; ids: string[] };
         activities_count: number;
-        applications_sent: number;
-        interviews: number;
-        offers: number;
-        rejected: number;
-        closed: number;
+        applications_sent: { count: number; ids: string[] };
+        responses: { count: number; ids: string[] };
+        interviews: { count: number; ids: string[] };
+        offers: { count: number; ids: string[] };
+        rejected: { count: number; ids: string[] };
+        closed: { count: number; ids: string[] };
     };
     recent_activity: Event[];
 }

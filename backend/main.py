@@ -54,9 +54,12 @@ def update_stage(vacancy_id: str, stage: VacancyStage, comment: Optional[str] = 
     
     old_stage_str = current['stage']
     
-    # Check if the stage is actually changing
+    # Smart Sync: 
+    # Only skip if status is the same AND a log entry already exists.
+    # Otherwise, even if status matches, we log it to fix sync issues.
     if old_stage_str == stage.value:
-        return current # No changes needed, return existing data
+        if storage.has_event_for_stage(vacancy_id, stage):
+            return current
 
     try:
         old_stage = VacancyStage(old_stage_str)
