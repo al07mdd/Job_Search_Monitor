@@ -87,39 +87,54 @@ export const ReportPrintView: React.FC<Props> = ({ year, month, metrics, onClose
     const [loading, setLoading] = useState(true);
     const [generatingPdf, setGeneratingPdf] = useState(false);
 
-    // Constants for pagination (Safe limits)
-    const ITEMS_PER_FIRST_PAGE = 6;
-    const ITEMS_PER_PAGE = 10;
+    // Constants for pagination (Weight-based)
+    // We target a "weight" capacity per page instead of a fixed count.
+    const FIRST_PAGE_MAX_WEIGHT = 7.5;
+    const OTHER_PAGE_MAX_WEIGHT = 10.5;
 
     useEffect(() => {
         const load = async () => {
             try {
                 const res = await api.getDetailedReport(year, month);
 
-                // Clean up history
-                const cleaned = res.map((v: DetailedVacancy) => {
+                // Clean up history and calculate weights
+                const processed = res.map((v: DetailedVacancy) => {
                     const uniqueHistory = v.history.filter((h, _, self) =>
                         !(h.status === 'Created' && self.some(other => other.status.toLowerCase() === 'new' && other.date === h.date))
                     ).map(h => ({
                         ...h,
                         status: h.status.toLowerCase() === 'new' ? 'Opened' : h.status
                     }));
-                    return { ...v, history: uniqueHistory };
+
+                    // Weight: normal is 1, long history (>3 items) gets extra weight
+                    const weight = 1 + (uniqueHistory.length > 3 ? 0.3 : 0) + (uniqueHistory.length > 6 ? 0.3 : 0);
+
+                    return { ...v, history: uniqueHistory, weight };
                 });
 
-                // Paginate data
+                // Dynamic Pagination Logic
                 const chunks: DetailedVacancy[][] = [];
+                let currentChunk: DetailedVacancy[] = [];
+                let currentWeight = 0;
+                let isFirstPage = true;
 
-                const firstPageItems = cleaned.slice(0, ITEMS_PER_FIRST_PAGE);
-                if (firstPageItems.length > 0) chunks.push(firstPageItems);
+                for (const item of processed) {
+                    const maxWeight = isFirstPage ? FIRST_PAGE_MAX_WEIGHT : OTHER_PAGE_MAX_WEIGHT;
 
-                let remaining = cleaned.slice(ITEMS_PER_FIRST_PAGE);
-                while (remaining.length > 0) {
-                    chunks.push(remaining.slice(0, ITEMS_PER_PAGE));
-                    remaining = remaining.slice(ITEMS_PER_PAGE);
+                    if (currentWeight + (item as any).weight > maxWeight && currentChunk.length > 0) {
+                        chunks.push(currentChunk);
+                        currentChunk = [item];
+                        currentWeight = (item as any).weight;
+                        isFirstPage = false;
+                    } else {
+                        currentChunk.push(item);
+                        currentWeight += (item as any).weight;
+                    }
                 }
 
-                if (cleaned.length === 0) chunks.push([]);
+                if (currentChunk.length > 0 || chunks.length === 0) {
+                    chunks.push(currentChunk);
+                }
 
                 setPaginatedData(chunks);
 
@@ -292,32 +307,32 @@ export const ReportPrintView: React.FC<Props> = ({ year, month, metrics, onClose
                         </div>
 
                         {/* Table Body */}
-                        <div className="flex flex-col">
+                        <div className="flex flex-col pb-4">
                             {pageItems.length === 0 && pageIndex === 0 ? (
                                 <div className="italic mt-4" style={styles.lighterText}>{t.table.empty}</div>
                             ) : (
                                 pageItems.map((item, idx) => (
                                     <div key={idx} className="flex border-b py-2 text-sm" style={{ ...styles.lightGrayBorder }}>
                                         <div className="w-1/4 pr-2">
-                                            <div className="font-bold text-sm leading-tight">{item.company}</div>
-                                            <div className="font-normal text-xs mt-0.5" style={styles.grayText}>{item.position}</div>
+                                            <div className="font-bold text-[13px] leading-tight">{item.company}</div>
+                                            <div className="font-normal text-[11px] mt-0.5" style={styles.grayText}>{item.position}</div>
                                         </div>
                                         <div className="w-1/6 pr-2">
-                                            <span className="inline-block px-1.5 py-0.5 rounded font-medium text-[10px] uppercase" style={styles.lightBg}>
+                                            <span className="inline-block px-1.5 py-0.5 rounded font-medium text-[9px] uppercase" style={styles.lightBg}>
                                                 {item.current_stage}
                                             </span>
                                         </div>
                                         <div className="flex-1">
-                                            <div className="flex flex-wrap items-center gap-y-1 text-xs">
+                                            <div className="flex flex-wrap items-center gap-x-1 gap-y-1 text-xs">
                                                 {item.history.map((h, i) => (
                                                     <React.Fragment key={i}>
-                                                        {i > 0 && <span className="mx-1" style={styles.lighterText}>→</span>}
-                                                        <div className="flex flex-col items-center px-1.5 py-0.5 rounded border" style={{ ...styles.grayBg, borderColor: '#f3f4f6' }}>
-                                                            <span className="font-semibold whitespace-nowrap text-[10px]" style={styles.darkGrayText}>
+                                                        {i > 0 && <span className="text-[10px]" style={styles.lighterText}>→</span>}
+                                                        <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded border" style={{ ...styles.grayBg, borderColor: '#f3f4f6' }}>
+                                                            <span className="font-bold whitespace-nowrap text-[9px] uppercase" style={styles.darkGrayText}>
                                                                 {h.status === 'status_change' ? t.table.change : h.status}
                                                             </span>
-                                                            <span className="font-mono text-[9px]" style={styles.lighterText}>
-                                                                {new Date(h.date).toLocaleDateString(locale)}
+                                                            <span className="font-mono text-[9px] border-l pl-1.5" style={{ ...styles.lighterText, borderColor: '#e5e7eb' }}>
+                                                                {new Date(h.date).toLocaleDateString(locale, { day: 'numeric', month: 'numeric' })}
                                                             </span>
                                                         </div>
                                                     </React.Fragment>
